@@ -1,0 +1,180 @@
+#! /usr/bin/wish
+
+set n 10
+set num_bombs [expr 2 * $n]
+set rel_neigh {-11 -10 -9 -1 1 9 10 11}
+
+set num_bomb_color(0) grey85
+set num_bomb_color(1) blue
+set num_bomb_color(2) green
+set num_bomb_color(3) red
+set num_bomb_color(4) purple
+set num_bomb_color(5) maroon
+set num_bomb_color(6) turquoise
+set num_bomb_color(7) black
+set num_bomb_color(8) gray
+
+# Loop to set the flag variable for right click and mark all elements as having no bomb
+for {set i 0} {$i < [expr $n * $n]} {incr i} {
+    set randbombpos($i) 0
+    set flag_var($i) 0
+}
+
+#for {set i 0} {$i < $num_bombs} { incr i } {
+#    set randbombpos([expr { int($n * $n * rand()) }]) 1
+#}    
+
+# Loop to assign 20 random positions as having bombs
+   # If condition added to make sure that random number generated is different from the previously generated positions
+set i 0
+while { $i < $num_bombs } {
+      set temp [expr rand()]
+      if { ! $randbombpos([expr { int($n * $n * $temp) }]) } {
+         set randbombpos([expr { int($n * $n * $temp) }]) 1
+         incr i
+      }
+}
+
+#foreach index [array names randbombpos] {
+#        if {$randbombpos($index)} {
+#            puts -nonewline "$index "
+#        }
+#}
+
+proc button_press {temp neighs_called} {
+     global randbombpos rel_neigh neigh_num_bombs n num_bomb_color
+     set a [string replace [concat .b $temp] 2 2]                                                    
+     if {$randbombpos($temp)} {
+                      
+        $a configure -relief sunken -bg red -disabledforeground black -state disabled -text "O"
+        for {set i 0} {$i < [expr $n * $n]} { incr i} {
+            set b [string replace [concat .b $i] 2 2]
+            bind $b <Button-3> {}
+            if {$randbombpos($i)} {
+               $b configure -relief sunken -bg red -disabledforeground black -state disabled -text "O"
+            } else {
+               $b configure -state disabled
+               bind $b <Button-1> {} 
+            }
+        }
+     } else {
+                   
+        # Following if condition makes sure that increment in number of bombs doesn't happen more than once        
+        if { !$neigh_num_bombs($temp) } {
+                        
+           # Loop to calculate number bombs in the neighbour of candidate button
+           foreach pos $rel_neigh {
+                               
+                   #puts -nonewline "$temp : [expr $temp + $pos], "
+                   if { [expr $temp + $pos] >= 0 &&
+                        [expr $temp + $pos] < [expr $n*$n] &&                    
+                        [expr !(!($temp % 10) && ((($temp + $pos) % 10) == 9))] &&
+                        [expr !((($temp % 10) == 9)  && !(($temp + $pos) % 10))] } {
+                      
+                      if { $randbombpos([expr $temp + $pos]) } {
+                                     
+                         puts -nonewline "index : $randbombpos([expr $temp + $pos])   "
+                         incr neigh_num_bombs($temp)
+                      }
+                   }
+           }
+           $a configure -relief sunken -state disabled -disabledforeground $num_bomb_color($neigh_num_bombs($temp)) -text $neigh_num_bombs($temp)
+           #puts "" 
+           if { !$neigh_num_bombs($temp) } {
+              
+              $a configure -relief sunken -state disabled 
+              lappend neighs_called [expr $temp]
+              foreach neigh $rel_neigh {
+                       
+                       if { [expr $temp + $neigh] >= 0 &&
+                            [expr $temp + $neigh] < [expr $n*$n] &&
+                            [expr !(!($temp % 10) && ((($temp + $neigh) % 10) == 9))] &&
+                            [expr !((($temp % 10) == 9)  && !(($temp + $neigh) % 10))] &&
+                            ($temp + $neigh) ni $neighs_called} {
+                          
+                          lappend neighs_called [expr $temp + $neigh]
+ 
+                          #puts -nonewline "Neighbour called: [expr $temp + $neigh], Called by: $temp; "   
+                          button_press [expr $temp + $neigh] $neighs_called
+                       }
+              }
+           }
+           #puts ""  
+        }
+       }
+} 
+
+proc bind_proc var {
+      bind .b$var <Button-1> { 
+                               set a %W
+                               set temp [string replace $a 0 1]
+                               bind .b$temp <Button-3> {}
+                               button_press $temp {101}
+      }
+}
+     
+
+
+#puts "**********************************************"
+ 
+set k 0
+set empty ""
+#set num_bombs_neighbour
+set bomb "O"
+
+for {set i 0} {$i < $n} {incr i} {
+    for {set j 0} {$j < $n} {incr j} {
+        set neigh_num_bombs([expr ($n*$i) + $j]) 0
+        button .b$k -width 1 -height 1 -bd 0.5 -relief raised
+        bind_proc $k
+        #bind .b$k <Button-1> { set a %W
+        #                       set temp [string replace $a 0 1] 
+        #                       button_press $temp {101}
+                               #[array get randbombpos] $rel_neigh [array get neigh_num_bombs]
+                               #set temp [string replace $a 0 1]
+                               #if {$randbombpos($temp)} {
+                               #   $a configure -relief sunken -fg red -bg DarkGray -text "O"
+                               #} else {
+                               #    if { !$neigh_num_bombs($temp) } {               
+                               #       foreach pos $rel_neigh {
+                       	       #	              puts -nonewline "$temp : [expr $temp + $pos]  "
+                               #	              if { [expr $temp + $pos] > 0 &&
+                               #   	           [expr $temp + $pos] < [expr $n*$n] && 
+                               #                    $randbombpos([expr $temp + $pos]) } {
+                               #                  
+                               #                  # If condition to care about buttons on side walls 
+                               #                  if { [expr !(!($temp %% 10) && ((($temp + $pos) %% 10) == 9))] &&
+                               #                       [expr !((($temp %% 10) == 9)  && !(($temp + $pos) %% 10))] } {
+                               #                    
+                               #                     puts "index : $randbombpos([expr $temp + $pos])"                      
+                               #                     incr neigh_num_bombs($temp)
+                               #                     $a configure -relief sunken -text $neigh_num_bombs($temp)
+                               #                  }
+                               #                 }
+                               #                }
+                               #               }
+                               #              }
+      
+        #}
+        bind .b$k <Button-3> { set a %W
+                               set temp [string replace $a 0 1]
+                               if {!$flag_var($temp)} {
+                                  $a configure -text "F" -state disabled -disabledforeground red
+                                  bind $a <Button-1> {}
+                                  incr flag_var($temp)
+                                  #puts $flag_var($temp)
+                               } elseif {$flag_var($temp) == 1} {
+                                  $a configure -text "?" -state disabled -disabledforeground black
+                                  incr flag_var($temp)
+                               } elseif {$flag_var($temp) == 2} {
+                                  $a configure -text "" -state normal
+                                  bind_proc $temp
+                                  set flag_var($temp) "0"
+                               }
+                             }
+        #-overrelief flat -bd 1
+        grid .b$k -row $i -column $j
+        incr k
+    }
+}
+#set textvar "3"

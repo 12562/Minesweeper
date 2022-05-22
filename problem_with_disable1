@@ -1,0 +1,18 @@
+#! /usr/bin/wish
+
+package require Img
+
+set filename "minesweeper_image.bmp"
+
+set sprites [image create photo -file $filename]
+
+set box_height 15
+set box_width 15
+
+set num [image create photo -height $box_height -width $box_width]
+
+$num copy $sprites -from 16 0 30 14 -to 1 1 15 15
+
+button .b -height $box_height -width $box_width -image $num -state disabled -disabledforeground white -bg grey75
+
+pack .b 

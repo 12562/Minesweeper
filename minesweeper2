@@ -1,0 +1,196 @@
+#! /usr/bin/wish
+
+package require Img
+
+set n 10
+set num_bombs [expr 2 * $n]
+set rel_neigh {-11 -10 -9 -1 1 9 10 11}
+
+set image_sprite_width 143
+set image_sprite_height 121
+set filename "minesweeper_image.bmp"
+
+set new_button_image_height 25
+set new_button_image_width 25
+
+set box_height 20
+set box_width  20
+
+set sprites [image create photo -file $filename]
+
+proc mk_image {im_name x1 y1 x2 y2 X1 Y1 X2 Y2} {
+     global box_width box_height sprites
+     upvar #0 $im_name name
+     set name [image create photo -height $box_height -width $box_width]
+     $name copy $sprites -from $x1 $y1 $x2 $y2 -to $X1 $Y1 $X2 $Y2
+}
+
+mk_image smile 2 57 23 78 0 0 21 21
+mk_image bomb_exploded 80 16 94 30 2 2 16 16
+mk_image bomb_unexploded 33 18 45 30 2 2 15 16
+mk_image blank 2 17 13 30 4 4 17 17
+mk_image box 2 18 14 30 0 0 14 14
+mk_image flag 49 17 61 30 4 4 17 17
+mk_image question_mark 97 17 109 30 4 4 17 17
+mk_image none 2 2 14 14 0 0 14 14
+mk_image one 16 1 31 16 1 2 15 16
+mk_image two 32 1 47 16 1 2 15 16
+mk_image three 48 1 63 16 1 2 15 16
+mk_image four 64 1 79 16 1 2 15 16
+mk_image five 80 1 95 16 1 2 15 16
+mk_image six 96 1 111 16 1 2 15 16
+mk_image seven 112 1 127 16 1 2 15 16 
+mk_image eight 128 2 143 16 1 2 15 16
+
+set flag_vals [list [list $flag disabled] [list $question_mark normal] [list $blank normal]]
+
+set num_bomb_image(0) $none
+set num_bomb_image(1) $one
+set num_bomb_image(2) $two
+set num_bomb_image(3) $three
+set num_bomb_image(4) $four
+set num_bomb_image(5) $five
+set num_bomb_image(6) $six
+set num_bomb_image(7) $seven
+set num_bomb_image(8) $eight
+
+proc boundary_check {neigh_pos pos n} {
+     return [expr ($neigh_pos >= 0) && \
+                  ($neigh_pos < $n*$n) && \
+                  (!(!($pos % 10) && ((($neigh_pos) % 10) == 9))) && \
+                  (!((($pos % 10) == 9)  && !(($neigh_pos) % 10)))] 
+}
+
+proc initialise_game {} {
+     
+     global n num_bombs rel_neigh randbombpos neigh_num_bombs flag_var box box_height box_width
+     # Loop to mark all elements as having no bomb
+     for {set i 0} {$i < [expr $n * $n]} {incr i} {
+         set randbombpos($i) 0
+         set flag_var($i) 0
+         .b$i configure -width $box_width -height $box_height -bd 1  -relief raised -image $box -state normal -bg grey75 -activebackground grey75
+     }   
+
+     # Loop to assign 20 random positions as having bombs
+       # If condition added to make sure that random number generated is different from the previously generated positions
+     set i 0
+     while { $i < $num_bombs } {
+           set pos [expr {int($n * $n * [expr rand()]) }]
+           if { ! $randbombpos($pos) } {
+              set randbombpos($pos) 1
+              incr i
+                                  
+              #Loop for incrementing number of bombs for those neighbours out of 8 which themselves have no bomb
+              foreach rel_pos $rel_neigh {
+                      if { [boundary_check [expr $rel_pos + $pos] $pos $n] && !$randbombpos([expr $rel_pos + $pos]) } { 
+                         incr neigh_num_bombs([expr $rel_pos + $pos]) 
+                      } 
+              }                         
+           }
+     }
+     
+}
+ 
+# Procedure to 
+proc button_press {a temp neighs_called} {
+     global randbombpos rel_neigh neigh_num_bombs n \
+            num_bomb_image bomb_exploded bomb_unexploded \
+            flag_var flag_vals \
+            box_height box_width                                                  
+     if {$randbombpos($temp)} {
+                      
+        $a configure -state disabled -relief sunken -bg red -height $box_height -width $box_width -image $bomb_exploded
+        for {set i 0} {$i < [expr $n * $n]} { incr i} {
+            right_click_bind $i 1
+            if {$randbombpos($i) && [lindex [lindex $flag_vals $flag_var($i)] 0] != "?" && $i != $temp} {
+               .b$i configure -state disabled -relief sunken -bg grey75 -height $box_height -width $box_width -image $bomb_unexploded
+            } else {
+               .b$i configure -state disabled -relief sunken
+               bind .b$i <Button-1> {} 
+            }
+        }
+     } else {
+                           
+        if { $temp ni [array names neigh_num_bombs] } {   
+           $a configure -relief sunken -state disabled 
+           lappend neighs_called [expr $temp]
+           foreach neigh $rel_neigh {
+                       
+             if { [boundary_check [expr $temp + $neigh] $temp $n] && ($temp + $neigh) ni $neighs_called } { 
+                lappend neighs_called [expr $temp + $neigh]
+                button_press .b[expr $temp + $neigh] [expr $temp + $neigh] $neighs_called
+             }
+           }
+        } else {
+            $a configure -relief sunken -image $num_bomb_image($neigh_num_bombs($temp)) -state disabled
+          }
+        }
+       
+} 
+
+proc left_click_bind {leftvar remove_leftclick_bind} {
+     if {!$remove_leftclick_bind} {
+        bind .b$leftvar <Button-1> { set temp [string replace %W 0 1]
+                                     right_click_bind $temp 1
+                                     button_press %W $temp {101}
+                                   }
+     } else {
+        bind .b$leftvar <Button-1> {}
+     } 
+}
+
+proc right_click_bind {rightvar remove_rightclick_bind} {
+     global flag_var flag_vals flag question_mark
+     if {!$remove_rightclick_bind} {
+        bind .b$rightvar <Button-3> { set button_pos [string replace %W 0 1]                            
+                                      %W configure -image [lindex [lindex $flag_vals $flag_var($button_pos)] 0] -state [lindex [lindex $flag_vals $flag_var($button_pos)] 1] -disabledforeground red 
+                                      left_click_bind $button_pos [expr !$flag_var($button_pos)]
+                                      set flag_var($button_pos) [expr [incr flag_var($button_pos)] %% 3] 
+        }
+     } else {
+        bind .b$rightvar <Button-3> {}
+     }
+}
+
+frame .menubar -bg wheat1
+menu .menubar.gamemenu -tearoff 0 -bg white -postcommand { .menubar.game configure -bg blue -fg white }
+.menubar.gamemenu add command -label "New           F2"
+.menubar.gamemenu add separator 
+.menubar.gamemenu add radiobutton -indicatoron 1 -label "Beginner"
+.menubar.gamemenu add radiobutton -label "Intermediate"
+.menubar.gamemenu add radiobutton -label "Expert"
+menubutton .menubar.game -activebackground blue -activeforeground white -direction below -bd 1 -bg wheat1 -relief flat -text "Game" -menu .menubar.gamemenu
+frame .topframe -bd 2 -relief sunken
+frame .bottomframe -bd 2 -relief sunken
+frame .topframe.counter -bg black -bd 1 -height 28 -width 55 -relief sunken
+frame .topframe.num_flags -bg black -bd 1 -height 28 -width 55 -relief sunken
+button .topframe.new -width 23 -height 23 -bd 2 -relief raised -activebackground grey75 -image $smile -bg grey75
+pack .menubar -side top -fill x
+pack .menubar.game -side left
+pack .topframe -side top -padx 6 -pady 6 -ipadx 4 -fill x
+pack .topframe.counter -side left -padx 3 -pady 3
+pack .topframe.num_flags -side right -padx 3 -pady 3
+pack .bottomframe -side bottom -padx 6 -pady 6
+pack .topframe.new -padx 3 -pady 3
+
+bind .topframe.new <Button-1> { unset neigh_num_bombs
+                       initialise_game
+                       for {set i 0} {$i < $n * $n} {incr i} {
+                           left_click_bind $i 0
+                           right_click_bind $i 0
+                       }
+}
+
+set k 0
+for {set i 1} {$i <= $n} {incr i} {
+    for {set j 1} {$j <= $n} {incr j} {
+        button .b$k -width $box_width -height $box_height -image $box -relief raised -bg grey75
+        left_click_bind $k 0
+        right_click_bind $k 0
+        grid .b$k -row $i -column $j -in .bottomframe
+        #grid .b$k -row $i -column $j -in .topframe
+        incr k
+    }
+}
+
+initialise_game

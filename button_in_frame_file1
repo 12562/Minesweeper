@@ -1,0 +1,7 @@
+#! /usr/bin/wish
+button .new -width 1 -height 1 -relief raise -bd 2 -text "HElLO"
+frame .top -relief sunken -bd 3
+frame .in -relief raise -width 20 -height 20 -bg red   
+pack .top -ipadx 5 -ipady 5 -fill x 
+pack .new -in .top -side left -padx 5 -pady 5
+pack .in -in .top -side right

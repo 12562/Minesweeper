@@ -1,0 +1,95 @@
+#! /usr/bin/wish
+
+proc mk_image {im_name x1 y1 x2 y2 X1 Y1 X2 Y2} {
+  global box_width box_height sprites
+  upvar #0 $im_name name
+  set name [image create photo -height $box_height -width $box_width]
+  $name copy $sprites -from $x1 $y1 $x2 $y2 -to $X1 $Y1 $X2 $Y2
+}
+
+mk_image smile 2 57 23 78 2 2 23 23
+mk_image bomb_exploded 80 16 94 30 2 2 16 16
+mk_image bomb_unexploded 33 18 45 30 2 2 15 16
+mk_image blank 2 17 13 30 4 4 17 17
+mk_image box 2 18 14 30 0 0 14 14
+mk_image flag 49 17 61 30 4 4 17 17
+mk_image question_mark 97 17 109 30 4 4 17 17
+mk_image none 2 2 14 14 0 0 14 14
+mk_image one 16 1 31 16 1 2 15 16
+mk_image two 32 1 47 16 1 2 15 16
+mk_image three 48 1 63 16 1 2 15 16
+mk_image four 64 1 79 16 1 2 15 16
+mk_image five 80 1 95 16 1 2 15 16
+mk_image six 96 1 111 16 1 2 15 16
+mk_image seven 112 1 127 16 1 2 15 16
+mk_image eight 128 2 143 16 1 2 15 16
+
+
+# The above set of code(23 lines) replaced the following set of code(65 l# ines) in the minesweeper2 code
+
+set smile [image create photo \
+ -height $new_button_image_height -width $new_button_image_width]
+
+set flag [image create photo\
+ -height $box_height -width $box_width]
+
+set question_mark [image create photo\
+ -height $box_height -width $box_width]
+
+set blank [image create photo \
+ -height $box_height -width $box_width]
+
+set bomb_exploded [image create photo \
+ -height $box_height -width $box_width]
+
+set bomb_unexploded [image create photo \
+ -height $box_height -width $box_width]
+
+set box [image create photo \
+ -height $box_height -width $box_width]
+
+set none [image create photo \
+ -height $box_height -width $box_width]
+
+set one [image create photo \
+ -height $box_height -width $box_width]
+
+set two [image create photo \
+ -height $box_height -width $box_width]
+
+set three [image create photo \
+ -height $box_height -width $box_width]
+
+set four [image create photo \
+ -height $box_height -width $box_width]
+
+set five [image create photo \
+ -height $box_height -width $box_width]
+
+set six [image create photo \
+-height $box_height -width $box_width]
+
+set seven [image create photo \
+ -height $box_height -width $box_width]
+
+set eight [image create photo \
+ -height $box_height -width $box_width]
+
+
+$smile copy $sprites -from 2 57 23 78 -to 2 2 23 23
+$bomb_exploded copy $sprites -from 80 16 94 30 -to 2 2 16 16
+$bomb_unexploded copy $sprites -from 33 18 45 30 -to 2 2 15 16
+$blank copy $sprites -from 2 17 13 30 -to 4 4 17 17
+$box copy $sprites -from 2 18 14 30 -to 0 0 14 14
+$flag copy $sprites -from 49 17 61 30 -to 4 4 17 17
+$question_mark copy $sprites -from 97 17 109 30 -to 4 4 17 17
+
+$none copy $sprites -from 2 2 14 14 -to 0 0 14 14
+$one copy $sprites -from 16 1 31 16 -to 1 2 15 16
+$two copy $sprites -from 32 1 47 16 -to 1 2 15 16
+$three copy $sprites -from 48 1 63 16 -to 1 2 15 16
+$four copy $sprites -from 64 1 79 16 -to 1 2 15 16
+$five copy $sprites -from 80 1 95 16 -to 1 2 15 16
+$six copy $sprites -from 96 1 111 16 -to 1 2 15 16
+$seven copy $sprites -from 112 1 127 16 -to 1 2 15 16 
+$eight copy $sprites -from 128 2 143 16 -to 1 2 15 16

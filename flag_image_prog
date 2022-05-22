@@ -1,0 +1,4 @@
+#! /usr/bin/wish
+image create bitmap .flag -file "flag2.bmp"
+button .b -image .flag
+pack .b
